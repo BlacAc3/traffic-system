@@ -72,7 +72,8 @@ pip install -r requirements.txt
 
 The system can be operated through the `main.py` file, which provides several options:
 
-#### Generate new traffic data
+#### Generate new traffic data(optional)
+Run to generate new sets of traffic images to be analyzed by the model.
 ```
 python main.py
 ```
@@ -85,19 +86,3 @@ python server.py
 ```
 
 Then open your browser and navigate to `http://localhost:5000/`.
-
-## Project Structure
-
-- `/data`: Contains traffic images (both synthetic and real)
-- `/output`: Contains analysis results and visualizations
-- `/templates`: HTML templates for the web interface
-- `/static`: Static files for the web interface (CSS, JavaScript)
-
-## Workflow
-
-1. Generate traffic data or add your own traffic images to the `/data` directory
-2. Extract vehicle counts from the images
-3. Train the model on the extracted features
-4. Make predictions on new images
-5. Visualize the results
-6. Optionally use the web interface for a more user-friendly experience
