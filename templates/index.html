@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Traffic Analysis System</title>
+        <link rel="stylesheet" href="/static/css/styles.css" />
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Traffic Analysis System</h1>
+                <p>
+                    Select an image to analyze traffic conditions and adjust
+                    traffic light timings
+                </p>
+            </header>
+
+            <main>
+                <section class="image-selection">
+                    <h2>Available Traffic Images</h2>
+                    <div id="image-grid" class="image-grid">
+                        <p>Loading images...</p>
+                    </div>
+                </section>
+
+                <section class="results">
+                    <div class="analysis-panel">
+                        <h2>Traffic Analysis</h2>
+                        <div id="analysis-results">
+                            <p class="select-prompt">
+                                Please select an image to analyze
+                            </p>
+                        </div>
+                        <div id="visualization" class="visualization">
+                            <!-- Visualization will appear here -->
+                        </div>
+                    </div>
+
+                    <div class="traffic-light-panel">
+                        <h2>Traffic Light Simulation</h2>
+                        <div class="traffic-light">
+                            <div class="light red" id="red-light"></div>
+                            <div class="light yellow" id="yellow-light"></div>
+                            <div class="light green" id="green-light"></div>
+                        </div>
+                        <div id="timing-display">
+                            <p>Select an image to start simulation</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer>
+                <p>
+                    Traffic Analysis System Demo | Dynamic Traffic Light Control
+                </p>
+            </footer>
+        </div>
+
+        <script src="/static/js/main.js"></script>
+    </body>
+</html>
