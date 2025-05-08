@@ -32,32 +32,48 @@ def get_images():
 def analyze_image():
     """Analyze a traffic image and return results"""
     data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+        
     image_path = data.get('image_path')
 
-    if not image_path or not os.path.exists(image_path):
-        return jsonify({'error': 'Invalid image path'}), 400
+    if not image_path:
+        return jsonify({'error': 'Image path is required'}), 400
+        
+    if not os.path.exists(image_path):
+        return jsonify({'error': f'Image not found: {image_path}'}), 404
 
-    # Use the existing predict_traffic function
-    prediction, counts, img_path = predict_traffic(image_path)
+    try:
+        # Use the existing predict_traffic function
+        prediction, counts, img_path = predict_traffic(image_path)
 
-    # Calculate traffic light timings based on analysis
-    timings = calculate_traffic_light_timings(counts, prediction)
+        # Calculate traffic light timings based on analysis
+        timings = calculate_traffic_light_timings(counts, prediction)
+    except Exception as e:
+        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
     # Create visualization and convert to base64 for sending to frontend
-    img_buffer = BytesIO()
-    plt.figure(figsize=(10, 6))
-    visualize_traffic(img_path, counts, prediction)
-    plt.savefig(img_buffer, format='png')
-    plt.close()
-    img_buffer.seek(0)
-    img_base64 = base64.b64encode(img_buffer.read()).decode('utf-8')
+    try:
+        img_buffer = BytesIO()
+        plt.figure(figsize=(10, 6))
+        visualize_traffic(img_path, counts, prediction)
+        plt.savefig(img_buffer, format='png')
+        plt.close()
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.read()).decode('utf-8')
+    except Exception as e:
+        print(f"Visualization error: {e}")
+        img_base64 = None
 
-    return jsonify({
+    # Prepare and return response
+    response = {
         'prediction': prediction,
         'counts': counts,
         'timings': timings,
         'visualization': img_base64
-    })
+    }
+    
+    return jsonify(response)
 
 @app.route('/data/<filename>')
 def serve_image(filename):

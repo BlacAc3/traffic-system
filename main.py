@@ -44,10 +44,10 @@ def main():
         print("\n--- Extracting Features ---")
         extract_counts()
 
-    # # Train model
-    # if args.train or run_all:
-    #     print("\n--- Training Model ---")
-    #     train_traffic_model()
+    # Train model
+    if args.train or run_all:
+        print("\n--- Training Model ---")
+        train_traffic_model()
 
     # Make predictions
     prediction = None

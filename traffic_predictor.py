@@ -18,7 +18,7 @@ def predict_traffic(image_path=None):
 
     # Check if model exists
     if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model file not found: {model_path}")
+        raise FileNotFoundError(f"Model file not found: {model_path}. Please run model training first.")
 
     # Load the model
     try:
@@ -26,13 +26,18 @@ def predict_traffic(image_path=None):
             model = pickle.load(f)
     except Exception as e:
         raise Exception(f"Error loading model: {e}")
+    
+    # Ensure data directory exists
+    if not os.path.exists(data_dir):
+        raise FileNotFoundError(f"Data directory not found: {data_dir}")
 
     # If no image specified, use the last image in data directory
     if image_path is None:
-        # Find png files in data directory
-        image_files = [f for f in os.listdir(data_dir) if f.endswith('.png')]
+        # Find image files in data directory (support multiple formats)
+        image_files = [f for f in os.listdir(data_dir) 
+                     if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
         if not image_files:
-            raise FileNotFoundError("No images found in data directory")
+            raise FileNotFoundError("No images found in data directory. Please add images or generate synthetic data first.")
 
         # Sort by name and get the last one
         image_files.sort()
@@ -43,29 +48,54 @@ def predict_traffic(image_path=None):
         raise FileNotFoundError(f"Image not found: {image_path}")
 
     # Process the image to extract features
-    img = cv2.imread(image_path)
-    if img is None:
-        raise Exception(f"Failed to read image: {image_path}")
+    try:
+        img = cv2.imread(image_path)
+        if img is None:
+            raise Exception(f"Failed to read image: {image_path}")
+            
+        # Validate image dimensions
+        if img.shape[0] == 0 or img.shape[1] == 0:
+            raise ValueError(f"Invalid image dimensions: {img.shape}")
+    except Exception as e:
+        raise Exception(f"Error processing image: {e}")
 
     # Extract lane counts (similar to feature_extractor)
     num_lanes = 4
     lane_width = 200
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(
-        thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
+    try:
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Apply thresholding to create binary image
+        _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+        
+        # Find contours representing vehicles
+        contours, _ = cv2.findContours(
+            thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
 
-    # Count vehicles per lane
-    counts = [0] * num_lanes
-    for cnt in contours:
-        M = cv2.moments(cnt)
-        if M["m00"] == 0:
-            continue
-        cx = int(M["m10"] / M["m00"])
-        lane = min(cx // lane_width, num_lanes - 1)
-        counts[lane] += 1
+        # Count vehicles per lane
+        counts = [0] * num_lanes
+        for cnt in contours:
+            # Calculate moments to find centroid
+            M = cv2.moments(cnt)
+            if M["m00"] == 0:
+                continue
+                
+            # Get contour area and filter out very small contours (noise)
+            area = cv2.contourArea(cnt)
+            if area < 100:  # Minimum area threshold
+                continue
+                
+            # Calculate centroid position
+            cx = int(M["m10"] / M["m00"])
+            
+            # Determine which lane the vehicle is in
+            lane = min(cx // lane_width, num_lanes - 1)
+            counts[lane] += 1
+    except Exception as e:
+        raise Exception(f"Error in vehicle detection: {e}")
 
     # Make prediction
     prediction = model.predict([counts])[0]

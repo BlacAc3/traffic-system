@@ -14,12 +14,12 @@ async function fetchImages() {
       displayImages(data.images);
     } else {
       document.getElementById("image-grid").innerHTML =
-        "<p>No traffic images available</p>";
+        "<p class='select-prompt'>No traffic images available</p>";
     }
   } catch (error) {
     console.error("Error fetching images:", error);
     document.getElementById("image-grid").innerHTML =
-      "<p>Error loading images. Please try again.</p>";
+      "<p class='select-prompt'>Error loading images. Please try again.</p>";
   }
 }
 
@@ -32,11 +32,13 @@ function displayImages(images) {
 
     const imageItem = document.createElement("div");
     imageItem.className = "image-item";
-    imageItem.addEventListener("click", () => selectImage(imagePath));
+    imageItem.dataset.path = imagePath;
+    imageItem.addEventListener("click", (event) => selectImage(imagePath, event));
 
     const img = document.createElement("img");
     img.src = `/data/${imageName}`;
     img.alt = `Traffic Image: ${imageName}`;
+    img.loading = "lazy"; // Lazy load images for better performance
 
     imageItem.appendChild(img);
     grid.appendChild(imageItem);
@@ -44,28 +46,27 @@ function displayImages(images) {
 }
 
 async function selectImage(imagePath, event) {
-  // Highlight selected image with smooth transition
+  // Highlight selected image
   document.querySelectorAll(".image-item").forEach((item) => {
     item.classList.remove("selected");
   });
 
   // Get the clicked element and add selected class
-  const selectedItem = event
-    ? event.currentTarget
-    : document.querySelector(`[data-path="${imagePath}"]`);
+  const selectedItem = event?.currentTarget ||
+    document.querySelector(`[data-path="${imagePath}"]`);
+  
   if (selectedItem) {
     selectedItem.classList.add("selected");
     // Scroll the image into view if needed
     selectedItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
-  // Create an enhanced loading indicator with subtle colors and animation
+  // Show loading indicators
   const resultsContainer = document.getElementById("analysis-results");
   resultsContainer.innerHTML = `
     <div class="analysis-loading">
       <div class="loading-spinner-container">
         <div class="loading-spinner"></div>
-        <div class="loading-spinner-overlay"></div>
       </div>
       <h4 class="loading-title">Analyzing Traffic Image</h4>
       <div class="loading-progress">
@@ -92,7 +93,7 @@ async function selectImage(imagePath, event) {
     loadingSteps[1].classList.add("active-step");
   }, 800);
 
-  // Clear previous visualization with pulsing placeholder
+  // Clear previous visualization
   document.getElementById("visualization").innerHTML = `
     <div class="visualization-placeholder">
       <div class="pulse-container">
@@ -113,7 +114,7 @@ async function selectImage(imagePath, event) {
   }, 400);
 
   try {
-    // Show the image being analyzed with a subtle highlight
+    // Show the image being analyzed
     const previewContainer = document.createElement("div");
     previewContainer.className = "analysis-preview";
     previewContainer.innerHTML = `
@@ -143,7 +144,7 @@ async function selectImage(imagePath, event) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.message || `Analysis failed (${response.status})`,
+        errorData.error || `Analysis failed (${response.status})`
       );
     }
 
@@ -151,26 +152,23 @@ async function selectImage(imagePath, event) {
 
     // Complete the progress animation
     progressFill.style.width = "100%";
-    progressFill.style.backgroundColor = "#4CAF50";
+    progressFill.style.backgroundColor = "#2ecc71";
 
     // Clear interval for dots animation
     clearInterval(dotAnimation);
 
-    // Add a subtle fade-in effect for results with color transition
+    // Display results with a fade-in effect
     resultsContainer.style.opacity = "0";
     displayAnalysisResults(data);
     setTimeout(() => {
-      resultsContainer.style.transition =
-        "opacity 0.8s ease, transform 0.5s ease";
-      resultsContainer.style.transform = "translateY(0)";
+      resultsContainer.style.transition = "opacity 0.8s ease";
       resultsContainer.style.opacity = "1";
     }, 300);
 
-    // Start traffic light simulation with visual feedback
+    // Start traffic light simulation
     const timingDisplay = document.getElementById("timing-display");
     timingDisplay.innerHTML = `
       <div class="timing-calculation">
-        <div class="timing-indicator"></div>
         <p>Calculating optimal traffic light timing...</p>
       </div>
     `;
@@ -186,7 +184,7 @@ async function selectImage(imagePath, event) {
         <div class="error-icon">
           <svg viewBox="0 0 24 24" width="32" height="32">
             <circle cx="12" cy="12" r="11" fill="#ffebee" />
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#f44336"/>
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#e74c3c"/>
           </svg>
         </div>
         <h4>Analysis Error</h4>
@@ -212,26 +210,49 @@ function displayAnalysisResults(data) {
 
   // Build results HTML
   let html = `
-        <h3>Analysis Results</h3>
-        <p>Prediction: <span class="${congestionClass}">${data.prediction}</span></p>
-        <h4>Vehicle Counts:</h4>
-        <ul>
-    `;
+    <h3>Analysis Results</h3>
+    
+    <div class="stats-card">
+      <div class="stats-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z" />
+        </svg>
+      </div>
+      <div class="stats-data">
+        <div class="stats-value ${congestionClass}">${data.prediction}</div>
+        <div class="stats-label">Traffic Congestion Level</div>
+      </div>
+    </div>
+    
+    <div class="stats-card">
+      <div class="stats-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M18,18H6V6H18M18,4H6A2,2 0 0,0 4,6V18A2,2 0 0,0 6,20H18A2,2 0 0,0 20,18V6A2,2 0 0,0 18,4M14,8H10V10H14M14,12H10V14H14V12Z" />
+        </svg>
+      </div>
+      <div class="stats-data">
+        <div class="stats-value">${data.timings.vehicle_count}</div>
+        <div class="stats-label">Total Vehicles Detected</div>
+      </div>
+    </div>
+    
+    <h4>Vehicle Counts by Lane:</h4>
+    <ul>
+  `;
 
   // Add vehicle counts for each lane
-  for (const [lane, count] of Object.entries(data.counts)) {
-    html += `<li>${lane}: ${count} vehicles</li>`;
-  }
+  data.counts.forEach((count, index) => {
+    html += `<li><span>Lane ${index + 1}</span><span>${count} vehicles</span></li>`;
+  });
 
   html += `</ul>
-        <h4>Traffic Light Timing:</h4>
-        <ul>
-            <li>Green: ${data.timings.green} seconds</li>
-            <li>Yellow: ${data.timings.yellow} seconds</li>
-            <li>Red: ${data.timings.red} seconds</li>
-        </ul>
-        <p>Total vehicles: ${data.timings.vehicle_count}</p>
-    `;
+    <h4>Calculated Traffic Light Timing:</h4>
+    <ul>
+      <li><span>Green Light</span><span>${data.timings.green} seconds</span></li>
+      <li><span>Yellow Light</span><span>${data.timings.yellow} seconds</span></li>
+      <li><span>Red Light</span><span>${data.timings.red} seconds</span></li>
+    </ul>
+  `;
 
   resultsContainer.innerHTML = html;
 
@@ -239,9 +260,9 @@ function displayAnalysisResults(data) {
   if (data.visualization) {
     const visualizationContainer = document.getElementById("visualization");
     visualizationContainer.innerHTML = `
-            <img src="data:image/png;base64,${data.visualization}"
-                 alt="Traffic Analysis Visualization">
-        `;
+      <img src="data:image/png;base64,${data.visualization}"
+           alt="Traffic Analysis Visualization">
+    `;
   }
 }
 
@@ -309,7 +330,7 @@ function updateTimingDisplay(light, seconds) {
   const timingDisplay = document.getElementById("timing-display");
   const capitalizedLight = light.charAt(0).toUpperCase() + light.slice(1);
   timingDisplay.innerHTML = `
-        <p>${capitalizedLight} light: ${seconds} seconds</p>
-        <p class="timing-note">Timing adjusted based on traffic conditions</p>
-    `;
+    <p>${capitalizedLight} light: ${seconds} seconds</p>
+    <p class="timing-note">Timing dynamically adjusted based on traffic conditions</p>
+  `;
 }
