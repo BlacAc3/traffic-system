@@ -75,7 +75,7 @@ The system can be operated through the `main.py` file, which provides several op
 #### Generate new traffic data(optional)
 Run to generate new sets of traffic images to be analyzed by the model.
 ```
-python main.py
+python main.py --generate
 ```
 
 ### Web Interface
