@@ -105,7 +105,7 @@ def calculate_traffic_light_timings_per_lane(counts, prediction):
     # Base cycle parameters
     base_green = 30     # nominal total green-time budget (sec) to split among lanes
     base_yellow = 5     # fixed per-lane yellow
-    base_red = 40       # nominal red (will be adjusted per lane)
+    base_red = 30       # nominal red (will be adjusted per lane)
     min_green = 10      # per-lane minimum green
     max_green = 60      # per-lane maximum green
 
@@ -142,6 +142,7 @@ def calculate_traffic_light_timings_per_lane(counts, prediction):
         cycle_length = max(cycle_length, lane_cycle)
 
     timings['cycle_length'] = cycle_length
+    timings['vehicle_count']=total_vehicles
     return timings
 
 if __name__ == '__main__':

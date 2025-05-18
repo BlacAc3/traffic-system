@@ -17,57 +17,64 @@
             </header>
 
             <main>
-                <section>
-                    <h2>Traffic Images</h2>
-                    <div class="section-content">
-                        <p>
-                            Select an image to analyze traffic density and
-                            calculate optimal traffic light timings:
-                        </p>
-                        <div id="image-grid" class="image-grid">
-                            <p class="select-prompt">Loading images...</p>
+                <div id="main">
+                    <section>
+                        <h2>Traffic Images</h2>
+                        <div class="section-content">
+                            <p>
+                                Select an image to analyze traffic density and
+                                calculate optimal traffic light timings:
+                            </p>
+                            <div id="image-grid" class="image-grid">
+                                <p class="select-prompt">Loading images...</p>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <section>
-                    <h2>Analysis Dashboard</h2>
-                    <div class="section-content">
-                        <div class="results">
-                            <div class="analysis-panel">
-                                <h3>Traffic Analysis</h3>
-                                <div id="analysis-results">
-                                    <p class="select-prompt">
-                                        Please select an image from the left
-                                        panel to begin analysis
-                                    </p>
-                                </div>
-                                <div id="visualization" class="visualization">
-                                    <!-- Visualization will appear here -->
+                    <section>
+                        <h2>Analysis Dashboard</h2>
+                        <div class="section-content">
+                            <div class="results">
+                                <div class="analysis-panel">
+                                    <h3>Traffic Analysis</h3>
+                                    <div id="analysis-results">
+                                        <p class="select-prompt">
+                                            Please select an image from the left
+                                            panel to begin analysis
+                                        </p>
+                                    </div>
+                                    <div
+                                        id="visualization"
+                                        class="visualization"
+                                    >
+                                        <!-- Visualization will appear here -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
+                </div>
+                <section>
+                    <ul id="traffic-light-panel-div">
+                        <!-- <li class="traffic-light-panel">
+                            <h3>Traffic Light Timing</h3>
+                            <div class="traffic-light">
+                                <div class="light red" id="red-light"></div>
+                                <div
+                                    class="light yellow"
+                                    id="yellow-light"
+                                ></div>
+                                <div
+                                    class="light green"
+                                    id="green-light"
+                                ></div>
+                            </div>
+                            <div id="timing-display">
+                                <p>Select an image to start simulation</p>
+                            </div>
+                        </li> -->
+                    </ul>
                 </section>
-                <ul id="traffic-light-panel-div">
-                    <!-- <li class="traffic-light-panel">
-                        <h3>Traffic Light Timing</h3>
-                        <div class="traffic-light">
-                            <div class="light red" id="red-light"></div>
-                            <div
-                                class="light yellow"
-                                id="yellow-light"
-                            ></div>
-                            <div
-                                class="light green"
-                                id="green-light"
-                            ></div>
-                        </div>
-                        <div id="timing-display">
-                            <p>Select an image to start simulation</p>
-                        </div>
-                    </li> -->
-                </ul>
             </main>
 
             <footer>

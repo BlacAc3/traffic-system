@@ -239,15 +239,6 @@ function displayAnalysisResults(data) {
     html += `<li><span>Lane ${index + 1}</span><span>${count} vehicles</span></li>`;
   });
 
-  html += `</ul>
-    <h4>Calculated Traffic Light Timing:</h4>
-    <ul>
-      <li><span>Green Light</span><span>${data.timings.green} seconds</span></li>
-      <li><span>Yellow Light</span><span>${data.timings.yellow} seconds</span></li>
-      <li><span>Red Light</span><span>${data.timings.red} seconds</span></li>
-    </ul>
-  `;
-
   resultsContainer.innerHTML = html;
 
   // Display visualization
@@ -286,6 +277,11 @@ async function updateTrafficLightPanel(data) {
           <div id="timing-display">
               <p>Select an image to start simulation</p>
           </div>
+          <ul>
+            <li>Red: ${data.timings[i].red} seconds,</li>
+            <li>Yellow: ${data.timings[i].yellow} seconds,</li>
+            <li>Green: ${data.timings[i].green} seconds</li>
+          </ul>
       </li>
     `;
   }

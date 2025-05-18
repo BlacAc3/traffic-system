@@ -55,6 +55,11 @@ header h1 {
 }
 
 main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+#main {
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 2rem;
@@ -374,6 +379,7 @@ section h2 {
 
 #traffic-light-panel-div {
     display: grid;
+    padding: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     justify-items: center;
@@ -606,7 +612,7 @@ footer {
 
 /* Responsive styles */
 @media (max-width: 992px) {
-    main,
+    #main,
     .results {
         grid-template-columns: 1fr;
     }
