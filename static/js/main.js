@@ -3,8 +3,6 @@ document.addEventListener("DOMContentLoaded", function () {
   fetchImages();
 });
 
-let trafficLightInterval = null;
-
 async function fetchImages() {
   try {
     const response = await fetch("/api/images");
@@ -33,7 +31,9 @@ function displayImages(images) {
     const imageItem = document.createElement("div");
     imageItem.className = "image-item";
     imageItem.dataset.path = imagePath;
-    imageItem.addEventListener("click", (event) => selectImage(imagePath, event));
+    imageItem.addEventListener("click", (event) =>
+      selectImage(imagePath, event),
+    );
 
     const img = document.createElement("img");
     img.src = `/data/${imageName}`;
@@ -52,9 +52,10 @@ async function selectImage(imagePath, event) {
   });
 
   // Get the clicked element and add selected class
-  const selectedItem = event?.currentTarget ||
+  const selectedItem =
+    event?.currentTarget ||
     document.querySelector(`[data-path="${imagePath}"]`);
-  
+
   if (selectedItem) {
     selectedItem.classList.add("selected");
     // Scroll the image into view if needed
@@ -144,7 +145,7 @@ async function selectImage(imagePath, event) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.error || `Analysis failed (${response.status})`
+        errorData.error || `Analysis failed (${response.status})`,
       );
     }
 
@@ -165,14 +166,7 @@ async function selectImage(imagePath, event) {
       resultsContainer.style.opacity = "1";
     }, 300);
 
-    // Start traffic light simulation
-    const timingDisplay = document.getElementById("timing-display");
-    timingDisplay.innerHTML = `
-      <div class="timing-calculation">
-        <p>Calculating optimal traffic light timing...</p>
-      </div>
-    `;
-    setTimeout(() => startTrafficLightSimulation(data.timings), 500);
+    setTimeout(async () => await updateTrafficLightPanel(data), 500);
   } catch (error) {
     console.error("Error:", error);
 
@@ -211,7 +205,7 @@ function displayAnalysisResults(data) {
   // Build results HTML
   let html = `
     <h3>Analysis Results</h3>
-    
+
     <div class="stats-card">
       <div class="stats-icon">
         <svg viewBox="0 0 24 24">
@@ -223,7 +217,7 @@ function displayAnalysisResults(data) {
         <div class="stats-label">Traffic Congestion Level</div>
       </div>
     </div>
-    
+
     <div class="stats-card">
       <div class="stats-icon">
         <svg viewBox="0 0 24 24">
@@ -235,7 +229,7 @@ function displayAnalysisResults(data) {
         <div class="stats-label">Total Vehicles Detected</div>
       </div>
     </div>
-    
+
     <h4>Vehicle Counts by Lane:</h4>
     <ul>
   `;
@@ -266,16 +260,62 @@ function displayAnalysisResults(data) {
   }
 }
 
-function startTrafficLightSimulation(timings) {
+async function updateTrafficLightPanel(data) {
   // Clear any existing simulation
+  const trafficLightPanelDiv = document.getElementById(
+    "traffic-light-panel-div",
+  );
+  trafficLightPanelDiv.innerHTML = "";
+
+  //Dynamically generating the traffic light panel
+  for (let i = 0; i < data.counts.length; i++) {
+    trafficLightPanelDiv.innerHTML += `
+      <li id="traffic-lane-${i}" class="traffic-light-panel">
+          <h3>Lane ${i + 1}</h3>
+          <div class="traffic-light">
+              <div class="light red" id="red-light"></div>
+              <div
+                  class="light yellow"
+                  id="yellow-light"
+              ></div>
+              <div
+                  class="light green"
+                  id="green-light"
+              ></div>
+          </div>
+          <div id="timing-display">
+              <p>Select an image to start simulation</p>
+          </div>
+      </li>
+    `;
+  }
+
+  for (let i = 0; i < data.counts.length; i++) {
+    let trafficLightElement = document.querySelector(`#traffic-lane-${i}`);
+    let timings = data.timings[i];
+    let trafficLightInterval = null;
+    await startTrafficLightSimulation(
+      trafficLightInterval,
+      trafficLightElement,
+      timings,
+    );
+    console.log("Simulation started");
+  }
+}
+
+async function startTrafficLightSimulation(
+  trafficLightInterval,
+  trafficLightElement,
+  timings,
+) {
   if (trafficLightInterval) {
     clearInterval(trafficLightInterval);
   }
 
-  const redLight = document.getElementById("red-light");
-  const yellowLight = document.getElementById("yellow-light");
-  const greenLight = document.getElementById("green-light");
-  const timingDisplay = document.getElementById("timing-display");
+  const redLight = trafficLightElement.querySelector("#red-light");
+  const yellowLight = trafficLightElement.querySelector("#yellow-light");
+  const greenLight = trafficLightElement.querySelector("#green-light");
+  const timingDisplay = trafficLightElement.querySelector("#timing-display");
 
   // Reset all lights
   redLight.classList.remove("active");
@@ -287,13 +327,13 @@ function startTrafficLightSimulation(timings) {
   let timeRemaining = timings.green;
   greenLight.classList.add("active");
 
-  updateTimingDisplay(currentLight, timeRemaining);
+  await updateTimingDisplay(trafficLightElement, currentLight, timeRemaining);
 
   // Run the traffic light cycle
-  trafficLightInterval = setInterval(() => {
+  trafficLightInterval = setInterval(async () => {
     timeRemaining--;
 
-    updateTimingDisplay(currentLight, timeRemaining);
+    await updateTimingDisplay(trafficLightElement, currentLight, timeRemaining);
 
     if (timeRemaining <= 0) {
       // Switch to next light
@@ -326,8 +366,8 @@ function startTrafficLightSimulation(timings) {
   }, 1000);
 }
 
-function updateTimingDisplay(light, seconds) {
-  const timingDisplay = document.getElementById("timing-display");
+async function updateTimingDisplay(trafficLaneElement, light, seconds) {
+  const timingDisplay = trafficLaneElement.querySelector("#timing-display");
   const capitalizedLight = light.charAt(0).toUpperCase() + light.slice(1);
   timingDisplay.innerHTML = `
     <p>${capitalizedLight} light: ${seconds} seconds</p>

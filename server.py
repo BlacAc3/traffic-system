@@ -34,12 +34,12 @@ def analyze_image():
     data = request.json
     if not data:
         return jsonify({'error': 'No data provided'}), 400
-        
+
     image_path = data.get('image_path')
 
     if not image_path:
         return jsonify({'error': 'Image path is required'}), 400
-        
+
     if not os.path.exists(image_path):
         return jsonify({'error': f'Image not found: {image_path}'}), 404
 
@@ -48,7 +48,7 @@ def analyze_image():
         prediction, counts, img_path = predict_traffic(image_path)
 
         # Calculate traffic light timings based on analysis
-        timings = calculate_traffic_light_timings(counts, prediction)
+        timings = calculate_traffic_light_timings_per_lane(counts, prediction)
     except Exception as e:
         return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
 
@@ -72,7 +72,7 @@ def analyze_image():
         'timings': timings,
         'visualization': img_base64
     }
-    
+
     return jsonify(response)
 
 @app.route('/data/<filename>')
@@ -80,38 +80,69 @@ def serve_image(filename):
     """Serve traffic images from the data directory"""
     return send_from_directory('data', filename)
 
-def calculate_traffic_light_timings(counts, prediction):
-    """Calculate dynamic traffic light timings based on analysis"""
-    total_vehicles = sum(counts) if counts else 0
+def calculate_traffic_light_timings_per_lane(counts, prediction):
+    """
+    Calculate dynamic traffic light timings for each of four lanes.
 
-    # Base timings (in seconds)
-    base_green = 30
-    base_yellow = 5
-    base_red = 40
+    Args:
+        counts (list of int): vehicle counts for lanes 1–4, e.g. [c1, c2, c3, c4].
+        prediction (str): one of "High Congestion", "Medium Congestion", or "Low Congestion".
 
-    # Adjust based on congestion level
+    Returns:
+        dict: {
+            0: {'green': G1, 'yellow': Y, 'red': R1},
+            1: {'green': G2, 'yellow': Y, 'red': R2},
+            2: {'green': G3, 'yellow': Y, 'red': R3},
+            3: {'green': G4, 'yellow': Y, 'red': R4},
+            'cycle_length': C
+        }
+    """
+    # Ensure we have exactly 4 lanes
+    if not counts or len(counts) != 4:
+        raise ValueError("counts must be a list of 4 non-negative integers")
+
+    total_vehicles = sum(counts)
+    # Base cycle parameters
+    base_green = 30     # nominal total green-time budget (sec) to split among lanes
+    base_yellow = 5     # fixed per-lane yellow
+    base_red = 40       # nominal red (will be adjusted per lane)
+    min_green = 10      # per-lane minimum green
+    max_green = 60      # per-lane maximum green
+
+    # Congestion multiplier
     if prediction == "High Congestion":
-        congestion_multiplier = 1.5
+        cong_mul = 1.5
     elif prediction == "Medium Congestion":
-        congestion_multiplier = 1.2
+        cong_mul = 1.2
     else:  # Low Congestion
-        congestion_multiplier = 1.0
+        cong_mul = 1.0
 
-    # Calculate dynamic green light duration
-    # More vehicles = longer green light (with an upper limit)
-    vehicle_factor = min(2.0, 1.0 + (total_vehicles / 20.0))
-    green_duration = int(base_green * congestion_multiplier * vehicle_factor)
+    # Adjust the total green budget by congestion
+    green_budget = int(base_green * cong_mul)
+    # Distribute green_budget proportionally, or equally if no vehicles
+    if int(total_vehicles) > 0:
+        ratios = [c / total_vehicles for c in counts]
+    else:
+        ratios = [0.25] * 4  # equal share if no vehicles
 
-    # Cap at reasonable values
-    green_duration = min(max(green_duration, 10), 60)
+    # Build per-lane timings
+    timings = {}
+    cycle_length = 0
+    for lane_idx, ratio in enumerate(ratios):
+        g = int(green_budget * ratio)
+        # enforce per-lane clamps
+        g = max(min_green, min(g, max_green))
+        y = base_yellow
+        # red is cycle minus (green + yellow)
+        # here assume cycle is green_budget + yellow + base_red
+        # so each lane’s red = (green_budget + base_red) - (g + y)
+        lane_cycle = green_budget + base_red
+        r = lane_cycle - (g + y)
+        timings[str(lane_idx)] = {'green': g, 'yellow': y, 'red': r}
+        cycle_length = max(cycle_length, lane_cycle)
 
-    return {
-        'green': green_duration,
-        'yellow': base_yellow,
-        'red': base_red,
-        'vehicle_count': total_vehicles,
-        'congestion_level': prediction
-    }
+    timings['cycle_length'] = cycle_length
+    return timings
 
 if __name__ == '__main__':
     # Make sure required directories exist
